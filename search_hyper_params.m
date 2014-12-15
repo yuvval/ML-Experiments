@@ -1,11 +1,12 @@
-function best_hyper_param_id = search_hyper_params(search_params)
-% function best_hyper_param_id = search_hyper_params(search_params)
-% returns best hyper param index following a grid search
+function [best_hyper_param_id, results_fnames] = search_hyper_params(search_params)
+% function [best_hyper_param_id, results_fnames] = search_hyper_params(search_params)
+% returns best hyper param index following a grid search and results_fnames cell array
 % example for setting search_params struct:
-%     search_params{k}.train_func = @train_func_handle; % syntax is search_result_criteria = train_func(hyper_param_id, cfg_params, examples, labels, training_fold_logical_index);
+%     search_params{k}.train_func = @train_func_handle; % syntax is [result_criterion, full_fname_results] = train_func(hyper_param_id, cfg_params, examples, labels, training_fold_logical_index);
 %     search_params{k}.load_data_func = @load_dataset_func_handle; %syntax is [examples, labels, cfg_params] = load_dataset_func(cfg_params)        
 %     search_params{k}.cfg_params = cfg_params;
 %     search_params{k}.dataset_fold = folds.training(k); % where folds = cvpartition(num_examples, 'KFold', kfolds);
+%     search_params{k}.dataset_fold_id = k; % where folds = cvpartition(num_examples, 'KFold', kfolds);
 %     search_params{k}.kfolds = 5;        
 %     search_params{k}.hyper_params_indices;        
 
@@ -34,9 +35,9 @@ function best_hyper_param_id = search_hyper_params(search_params)
     % todo change to parfor
     for comb_id = size(train_params_comb,2)
         fold_id = train_params_comb(1,comb_id);
-        hyper_param_id = train_params_comb(2,comb_id);
-        
+        hyper_param_id = train_params_comb(2,comb_id);        
         search_params.cfg_params.fold_id = fold_id;
+        search_params.cfg_params.dataset_fold_id = search_params.dataset_fold_id;
         search_result_criteria(comb_id) = search_params.train_func(hyper_param_id, search_params.cfg_params, examples, labels, folds.training(fold_id));
     end
     
