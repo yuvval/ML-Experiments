@@ -9,6 +9,10 @@ function best_hyper_param_id = search_hyper_params(search_params)
 %     search_params{k}.kfolds = 5;        
 %     search_params{k}.hyper_params_indices;        
 
+
+    %% set indicator that we train for searching hyper param
+    search_params.cfg_params.train_objective = 'hpsearch';
+
     %% load the dataset
     [all_examples, all_labels, search_params.cfg_params] = search_params.load_data_func(search_params.cfg_params);
     
@@ -31,6 +35,8 @@ function best_hyper_param_id = search_hyper_params(search_params)
     for comb_id = size(train_params_comb,2)
         fold_id = train_params_comb(1,comb_id);
         hyper_param_id = train_params_comb(2,comb_id);
+        
+        search_params.cfg_params.fold_id = fold_id;
         search_result_criteria(comb_id) = search_params.train_func(hyper_param_id, search_params.cfg_params, examples, labels, folds.training(fold_id));
     end
     
