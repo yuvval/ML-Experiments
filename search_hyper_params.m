@@ -31,14 +31,20 @@ function [best_hyper_param_id, results_fnames] = search_hyper_params(search_para
     
     %% iterate (train) on all hyper_params and folds
     
+    % preparing for parfor loop
     search_result_criteria = zeros(size(train_params_comb,2),1);
-    % todo change to parfor
-    for comb_id = 1:length(search_result_criteria)
-        hyper_param_id = train_params_comb(1,comb_id);        
-        fold_id = train_params_comb(2,comb_id);
-        search_params.cfg_params.ifold_id = fold_id;
-        search_params.cfg_params.ofold_id = search_params.dataset_fold_id;
-        search_result_criteria(comb_id) = search_params.train_func(hyper_param_id, search_params.cfg_params, examples, labels, ifolds.training(fold_id));
+    
+    
+    hyper_param_ids = train_params_comb(1,:);
+    fold_ids = train_params_comb(2,:);
+
+    train_func = search_params.train_func;
+    cfg_params = search_params.cfg_params;
+    ofold = search_params.dataset_fold_id;
+    parfor comb_id = 1:length(search_result_criteria)
+        hyper_param_id = hyper_param_ids(comb_id);        
+        ifold = fold_ids(comb_id);
+        search_result_criteria(comb_id) = train_func(hyper_param_id, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
     end
     
     %% Todo: find best (maximizing) hyper param
