@@ -78,6 +78,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     %% save results to a .mat file before returning
     results_fname = fullfile(experiment_params.path_results_mat, experiment_params.experiment_results_ref_fname);
     save(results_fname, 'results')
+    fprintf('Saved experiment results on:\n %s\n', results_fname);
             
    
     
