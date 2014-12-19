@@ -57,6 +57,10 @@ function [best_hyprm_id, best_hyprm_max_steps_num, search_history] = search_hype
     search_history.ifolds = search_results_ifolds;
     search_history.hyprm_ids = search_results_hyprm_ids;
     search_history.steps_num = search_results_steps_num;
+    search_history.criteria = search_results_criteria;
+    search_history.train_params_comb = train_params_comb;
+    search_history.hyper_params_indices = hyper_params_indices;
+    search_history.search_performance_criterion = search_params.cfg_params.search_performance_criterion;
 
 
     
@@ -68,7 +72,9 @@ function [best_hyprm_id, best_hyprm_max_steps_num, search_history] = search_hype
         iter = iter+1;
     end
     best_hyprm_id = search_params.hyper_params_indices(avg_crit_per_hp==max(avg_crit_per_hp));   
-    
+
+    search_history.avg_crit_per_hp = avg_crit_per_hp;
+
     if (length(best_hyprm_id)) > 1 % if more than 1 hyparam gets best results we randomly choose one of the best
         best_hyprm_id = best_hyprm_id(randi(length(best_hyprm_id)));
     end
