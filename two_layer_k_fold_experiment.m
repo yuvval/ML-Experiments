@@ -31,6 +31,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     %% saving experiment and model configurations for results struct (for history)
     results.model_cfg_params = model_cfg_params;
     results.experiment_params = experiment_params;
+    results.tstart = datestr(now);
     
     %% load the dataset
     [examples, labels, model_cfg_params] = experiment_params.load_data_func(model_cfg_params);
@@ -72,6 +73,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     results.best_hyprm_id = best_hyprm_id;
     results.best_hyprm_max_steps_num = best_hyprm_max_steps_num;
     results.search_results = search_history;
+    results.tend = datestr(now);
 
     %% save results to a .mat file before returning
     results_fname = fullfile(experiment_params.path_results_mat, experiment_params.experiment_results_ref_fname);
