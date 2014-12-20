@@ -59,7 +59,7 @@ function [best_hyprm_id, best_hyprm_max_steps_num, search_history] = search_hype
     search_history.steps_num = search_results_steps_num;
     search_history.criteria = search_results_criteria;
     search_history.train_params_comb = train_params_comb;
-    search_history.hyper_params_indices = hyper_params_indices;
+    search_history.hyper_params_indices = search_params.hyper_params_indices;
     search_history.search_performance_criterion = search_params.cfg_params.search_performance_criterion;
 
 
