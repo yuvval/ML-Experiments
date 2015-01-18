@@ -14,7 +14,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
 %             experiment_params.load_data_func = @load_dataset; % syntax: [examples, labels, model_cfg_params] = load_dataset(model_cfg_params)
 %             experiment_params.train_func = @similarity_train; % syntax: [result_criterion, full_fname_results, steps_num] = similarity_train(hyper_param_id, model_cfg_params, examples, labels, training_fold_logical_index, ofold, ifold, steps_num)
 %             experiment_params.kfolds = kfolds;
-%             experiment_params.hyper_params_indices = hyper_params_indices to iterate upon
+%             experiment_params.hyper_params_sweep = hyper_params_sweep to iterate upon
 %             experiment_params.experiment_results_ref_fname = ['similarity_experiment_' method_params_str '_' dataset_params_str '_githash_' git_commit_hash];
 %             experiment_params.path_results_mat = '/cortex/yuvval/results_mat/experiments';
 %             % additional non mandatory params (for history)
@@ -26,7 +26,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
 
     %% init
     kfolds = experiment_params.kfolds;
-    hyper_params_indices = experiment_params.hyper_params_indices;
+    hyper_params_sweep = experiment_params.hyper_params_sweep;
 
     %% saving experiment and model configurations for results struct (for history)
     results.model_cfg_params = model_cfg_params;
@@ -38,6 +38,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     num_examples = length(labels);
 
     %% Split to K folds
+    rng(hyper_params_sweep.seed) % make sure to sync the seed before an split
     ofolds = cvpartition(num_examples, 'KFold', kfolds);
 
     %% Grid search on hyper params
@@ -49,7 +50,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
         search_params{k}.dataset_fold = ofolds.training(k);
         search_params{k}.dataset_fold_id = k;
         search_params{k}.kfolds = 5;        
-        search_params{k}.hyper_params_indices = hyper_params_indices;        
+        search_params{k}.hyper_params_sweep = hyper_params_sweep;        
     end
     
     [best_hyprm_id, best_hyprm_max_steps_num] = deal(zeros(kfolds, 1));
