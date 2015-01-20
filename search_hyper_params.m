@@ -54,7 +54,7 @@ function search_hyper_params(search_params)
         results_filename = fname_func(cfg_params, hyper_params{comb_id}, ofold, ifold);
         full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
         if exist(full_fname_touch, 'file')
-            system(['rm ', full_fname_touch]) % removed the touched file
+            system(['rm ', full_fname_touch]); % removed the touched file
         end
     end
     
@@ -62,10 +62,19 @@ function search_hyper_params(search_params)
     rng(ceil(cputime*100)) % random seed to select hyper params combinations to draw
     hyper_params_combinations_ids = randperm(length(search_results_criteria));
     % parallel iterate on combination of hyper params and inner folds. 
-    parfor k = 1:length(search_results_criteria)
-        comb_id = hyper_params_combinations_ids(k);
-        ifold = fold_ids(comb_id);
-        train_wrapper(train_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
+    isOpen = ~isempty(gcp('nocreate')); % If no pool, use regular for loop
+    if isOpen
+        parfor k = 1:length(search_results_criteria)
+            comb_id = hyper_params_combinations_ids(k);
+            ifold = fold_ids(comb_id);
+            train_wrapper(train_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
+        end
+    else        
+        for k = 1:length(search_results_criteria)
+            comb_id = hyper_params_combinations_ids(k);
+            ifold = fold_ids(comb_id);
+            train_wrapper(train_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
+        end
     end
     
     
@@ -80,14 +89,14 @@ try
     pause(mod(cputime,1)); % pause for a random time (<1 sec), before accessing the filesystem
     full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
     if ~exist(full_fname_touch, 'file')
-        system(['touch ', full_fname_touch]) % removed the touched file
+        system(['touch ', full_fname_touch]); % removed the touched file
         [search_results_fnames] = ...
             train_func(hyper_params, cfg_params, examples, labels, training_fold_logical_index, ofold, ifold);
-        system(['rm ', full_fname_touch]) % removed the touched file
+        system(['rm ', full_fname_touch]); % removed the touched file
     end
     
 catch exception
-    system(['rm ', full_fname_touch]) % removed the touched file
+    system(['rm ', full_fname_touch]); % removed the touched file
     rethrow(exception)             % Line 5
 end
 end
