@@ -11,7 +11,6 @@ function [ processed_search_results ] = postprocess_search_hyper_params( search_
 % processed_search_results.hyper_params_combs = hyper_params_combs;
 % processed_search_results.best_hyper_params_per_criterion = best_hyper_params_per_criterion;
 % processed_search_results.criteria_names = criteria_names;
-% processed_search_results.majority_vote_hyper_params = majority_vote_hyper_params;
 % processed_search_results.ofold = ofold;
 % processed_search_results.valid_search_results = valid_search_results;
 % processed_search_results.search_results_fnames = search_results_fnames;
@@ -92,7 +91,7 @@ criteria_names{end+1} = 'majority_vote';
 maximizing_hp_ids(end+1) = majority_hp_id;
 
 best_hyper_params_per_criterion = hyper_params_combs(maximizing_hp_ids,:);
-majority_vote_hyper_params = hyper_params_combs(majority_hp_id,:);
+% majority_vote_hyper_params = hyper_params_combs(majority_hp_id,:);
 
 
 processed_search_results.train_params_comb = train_params_comb; % save all combs
@@ -104,7 +103,7 @@ processed_search_results.std_criteria_per_hp = std_criteria_per_hp;
 processed_search_results.hyper_params_combs = hyper_params_combs;
 processed_search_results.best_hyper_params_per_criterion = best_hyper_params_per_criterion;
 processed_search_results.criteria_names = criteria_names;
-processed_search_results.majority_vote_hyper_params = majority_vote_hyper_params;
+% processed_search_results.majority_vote_hyper_params = majority_vote_hyper_params;
 processed_search_results.ofold = ofold;
 processed_search_results.valid_search_results = valid_search_results;
 processed_search_results.search_results_fnames = search_results_fnames;
