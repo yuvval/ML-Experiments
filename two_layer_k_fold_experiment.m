@@ -1,7 +1,9 @@
-function results = two_layer_k_fold_experiment(experiment_params, model_cfg_params)
-% function results = two_layer_k_fold_experiment(experiment_params, model_cfg_params)
+function results = two_layer_k_fold_experiment(experiment_params, model_cfg_params, experiment_stage)
+% function results = two_layer_k_fold_experiment(experiment_params, model_cfg_params, experiment_stage)
 % Runs a 2 layer K folds experiment.
 % input params: experiment params, model_configuration params
+%               experiment_stage: either 'search_hyperparams',
+%               'postprocess_search_hp', 'final_experiment'
 % returns: results structure with the following fields:
 %             results.fnames = filenames cell array of each fold trial (with the best hyper param)
 %             results.best_hyprm_id = best_hyprm_id for each fold 
@@ -31,7 +33,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     %% saving experiment and model configurations for results struct (for history)
     results.model_cfg_params = model_cfg_params;
     results.experiment_params = experiment_params;
-    results.tstart = datestr(now);
+    
     
     %% load the dataset
     [examples, labels, model_cfg_params] = experiment_params.load_data_func(model_cfg_params);
@@ -42,9 +44,10 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     ofolds = cvpartition(num_examples, 'KFold', kfolds);
 
     %% Grid search on hyper params
-    [search_params, search_history, results_fnames] = deal(cell(kfolds, 1));
+    [search_params, search_results, results_fnames, best_hyper_params] = deal(cell(kfolds, 1));
     for k=1:kfolds
         search_params{k}.train_func = experiment_params.train_func;
+        search_params{k}.train_results_fname_func = experiment_params.train_results_fname_func;        
         search_params{k}.load_data_func = experiment_params.load_data_func;        
         search_params{k}.cfg_params = model_cfg_params;
         search_params{k}.dataset_fold = ofolds.training(k);
@@ -52,34 +55,56 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
         search_params{k}.kfolds = 5;        
         search_params{k}.hyper_params_sweep = hyper_params_sweep;        
     end
-    
-    [best_hyprm_id, best_hyprm_max_steps_num] = deal(zeros(kfolds, 1));
-    for k=1:kfolds
-        fprintf('Search: Outer fold = %d\n', k');
-        [best_hyprm_id(k),best_hyprm_max_steps_num(k), search_history{k}] = search_hyper_params(search_params{k});
-    end
-    
-    %% iter on each fold, train with best hyper param and prepare results
-    model_cfg_params.train_aim = nan; % train_aim is used to indicate the train func the context it is running it: nan is the default. 'hpsearch' means that we run the training for hyper_param grid search.
-    criteria_exp = nan(kfolds, 1);
-    parfor k=1:kfolds
-        
-        fprintf('Experiment: Fold = %d\n', k');
-        [criteria_exp(k), results_fnames{k}] = search_params{k}.train_func(best_hyprm_id(k), model_cfg_params, examples, labels, ofolds.training(k), k, nan, best_hyprm_max_steps_num(k));
-    end
-    
-    %% prepare results to return
-    results.fnames = results_fnames;
-    results.criteria = criteria_exp;
-    results.best_hyprm_id = best_hyprm_id;
-    results.best_hyprm_max_steps_num = best_hyprm_max_steps_num;
-    results.search_results = search_history;
-    results.tend = datestr(now);
 
-    %% save results to a .mat file before returning
-    results_fname = fullfile(experiment_params.path_results_mat, experiment_params.experiment_results_ref_fname);
-    save(results_fname, 'results')
-    fprintf('Saved experiment results on:\n %s\n', results_fname);
+    %               experiment_stage: either 'search_hyperparams',
+%               'postprocess_search_hp', 'final_experiment'
+    switch experiment_stage
+        case 'search_hyperparams'
+            results.tstart = datestr(now);
+            for k=1:kfolds
+                fprintf('Search: Outer fold = %d\n', k');
+                search_hyper_params(search_params{k});
+            end
+            results.tend = datestr(now);
+        case 'postprocess_search_hp'
+            for k=1
+                search_results{k} = postprocess_search_hyper_params( search_params{k} );
+            end
+            results.search_results = search_results;
+        case 'final_experiment'
+            for k=1:kfolds
+                search_results{k} = postprocess_search_hyper_params( search_params{k} );
+            end
+            criterion_id = find(ismember(model_cfg_params.train_aim, search_results{1}.criteria_names),1);
+            for k=1:kfolds
+                % get best hyper param id
+                hp_comb_vector = search_results{k}.best_hyper_params_per_criterion(criterion_id, :);
+                best_hyper_params{k} = hyper_param_comb_to_struct(hp_comb_vector, hyper_params_sweep);
+            end
+            
+            
+            %% final experiment 
+            % iter on each fold, train with best hyper param and prepare results
+            parfor k=1:kfolds
+                fprintf('Experiment: Fold = %d\n', k');
+                [results_fnames{k}] = search_params{k}.train_func(best_hyper_params{k}, model_cfg_params, examples, labels, ofolds.training(k), k, nan);
+            end
+            
+            %% prepare results to return
+            results.fnames = results_fnames;
+            results.search_results = search_results;
+            results.best_hyper_params = best_hyper_params;
+
+            %% save results to a .mat file before returning
+            results_fname = fullfile(experiment_params.path_results_mat, experiment_params.experiment_results_ref_fname);
+            save(results_fname, 'results')
+            fprintf('Saved experiment results on:\n %s\n', results_fname);
+            
+        otherwise
+            disp('unknown experiment stage')
+    end
+    
+    
             
    
     

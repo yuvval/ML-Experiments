@@ -1,6 +1,11 @@
-function [best_hyprm_id, best_hyprm_max_steps_num, search_history] = search_hyper_params(search_params)
-% function [best_hyprm_id, best_hyprm_max_steps_num, search_history] = search_hyper_params(search_params)
-% returns best hyper param index following a grid search and results_fnames cell array
+function search_hyper_params(search_params)
+% function search_hyper_params(search_params)
+% performs a (parfor) grid search on hyper params. use
+% postprocess_search_hyper_params() to retrieve the results. this function
+% has mutual exclusion mechnism, so it can be executed concurrently by different machines
+% postprocess_search_hyper_params() can be called before the search execution
+% terminates
+%
 % example for setting search_params struct:
 %     search_params{k}.train_func = @train_func_handle; % syntax is [result_criterion, full_fname_results] = train_func(hyper_param_id, cfg_params, examples, labels, training_fold_logical_index);
 %     search_params{k}.load_data_func = @load_dataset_func_handle; %syntax is [examples, labels, cfg_params] = load_dataset_func(cfg_params)        
@@ -32,7 +37,6 @@ function [best_hyprm_id, best_hyprm_max_steps_num, search_history] = search_hype
     
     % preparing for parfor loop
     search_results_criteria = zeros(size(train_params_comb,2),1);
-    search_results_steps_num = zeros(size(train_params_comb,2),1);
     search_results_fnames = cell(size(search_results_criteria));
     hyper_params = cell(size(search_results_criteria));
     
@@ -40,13 +44,14 @@ function [best_hyprm_id, best_hyprm_max_steps_num, search_history] = search_hype
 
     train_func = search_params.train_func;
     cfg_params = search_params.cfg_params;
+    fname_func = search_params.train_results_fname_func;
     ofold = search_params.dataset_fold_id;
     
     % delete all junk 'touch' file locks if exist
     for comb_id = 1:length(search_results_criteria)
         hyper_params{comb_id} = hyper_param_comb_to_struct(train_params_comb(:, comb_id), hyper_params_sweep);
         ifold = fold_ids(comb_id);
-        [~, results_filename, ~] = init_hyper_params(struct('cfg_params', cfg_params), hyper_params{comb_id}, ofold, ifold);
+        results_filename = fname_func(cfg_params, hyper_params{comb_id}, ofold, ifold);
         full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
         if exist(full_fname_touch, 'file')
             system(['rm ', full_fname_touch]) % removed the touched file
@@ -56,7 +61,7 @@ function [best_hyprm_id, best_hyprm_max_steps_num, search_history] = search_hype
     % parallel iterate on combination of hyper params and inner folds. 
     for comb_id = 1:length(search_results_criteria)
         ifold = fold_ids(comb_id);
-        [search_results_criteria(comb_id), search_results_fnames{comb_id}, search_results_steps_num(comb_id)] = ...
+        [search_results_fnames{comb_id}] = ...
             train_wrapper(train_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
     end
     
@@ -64,14 +69,8 @@ function [best_hyprm_id, best_hyprm_max_steps_num, search_history] = search_hype
     
 end
 
-function hyper_params_struct = hyper_param_comb_to_struct(comb, hyper_params_sweep)    
-    hyper_params_fieldnames = fieldnames(hyper_params_sweep);
-    for i = 1:numel(hyper_params_fieldnames)
-        hyper_params_struct.(hyper_params_fieldnames{i}) = comb(i);
-    end
-end
 
-function [search_results_criteria, search_results_fnames, search_results_steps_num] = train_wrapper(train_func, hyper_params, cfg_params, examples, labels, training_fold_logical_index, ofold, ifold)
+function [search_results_fnames] = train_wrapper(train_func, hyper_params, cfg_params, examples, labels, training_fold_logical_index, ofold, ifold)
 
 [~, results_filename, ~] = init_hyper_params(struct('cfg_params', cfg_params), hyper_params, ofold, ifold);
 try
@@ -79,7 +78,7 @@ try
     full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
     if ~exist(full_fname_touch, 'file')
         system(['touch ', full_fname_touch]) % removed the touched file
-        [search_results_criteria, search_results_fnames, search_results_steps_num] = ...
+        [search_results_fnames] = ...
             train_func(hyper_params, cfg_params, examples, labels, training_fold_logical_index, ofold, ifold);
         system(['rm ', full_fname_touch]) % removed the touched file
     end
