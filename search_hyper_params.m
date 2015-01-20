@@ -58,8 +58,11 @@ function search_hyper_params(search_params)
         end
     end
     
+    % select hyper params combinations to draw    
+    rng(ceil(cputime*100)) % random seed to select hyper params combinations to draw
+    hyper_params_combinations_ids = randperm(length(search_results_criteria));
     % parallel iterate on combination of hyper params and inner folds. 
-    for comb_id = 1:length(search_results_criteria)
+    parfor comb_id = hyper_params_combinations_ids
         ifold = fold_ids(comb_id);
         [search_results_fnames{comb_id}] = ...
             train_wrapper(train_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);

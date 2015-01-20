@@ -15,6 +15,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
 % 
 %             experiment_params.load_data_func = @load_dataset; % syntax: [examples, labels, model_cfg_params] = load_dataset(model_cfg_params)
 %             experiment_params.train_func = @similarity_train; % syntax: [result_criterion, full_fname_results, steps_num] = similarity_train(hyper_param_id, model_cfg_params, examples, labels, training_fold_logical_index, ofold, ifold, steps_num)
+%             experiment_params.train_results_fname_func = @train_results_fnames_by_hyper_param;
 %             experiment_params.kfolds = kfolds;
 %             experiment_params.hyper_params_sweep = hyper_params_sweep to iterate upon
 %             experiment_params.experiment_results_ref_fname = ['similarity_experiment_' method_params_str '_' dataset_params_str '_githash_' git_commit_hash];
@@ -29,6 +30,9 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     %% init
     kfolds = experiment_params.kfolds;
     hyper_params_sweep = experiment_params.hyper_params_sweep;
+    if ~iscell(experiment_stage)
+        experiment_stage = {experiment_stage};
+    end
 
     %% saving experiment and model configurations for results struct (for history)
     results.model_cfg_params = model_cfg_params;
@@ -58,7 +62,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
 
     %               experiment_stage: either 'search_hyperparams',
 %               'postprocess_search_hp', 'final_experiment'
-    switch experiment_stage
+    switch experiment_stage{1}
         case 'search_hyperparams'
             results.tstart = datestr(now);
             for k=1:kfolds
@@ -67,7 +71,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             end
             results.tend = datestr(now);
         case 'postprocess_search_hp'
-            for k=1
+            for k=experiment_stage{2}
                 search_results{k} = postprocess_search_hyper_params( search_params{k} );
             end
             results.search_results = search_results;
