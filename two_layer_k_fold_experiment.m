@@ -2,8 +2,9 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
 % function results = two_layer_k_fold_experiment(experiment_params, model_cfg_params, experiment_stage)
 % Runs a 2 layer K folds experiment.
 % input params: experiment params, model_configuration params
-%               experiment_stage: either 'search_hyperparams',
-%               'postprocess_search_hp', 'final_experiment'
+%               experiment_stage: either {'search_hyperparams'},
+%               {'postprocess_search_hp', folds_range},
+%               {'final_experiment', search_criterion_str}
 % returns: results structure with the following fields:
 %             results.fnames = filenames cell array of each fold trial (with the best hyper param)
 %             results.best_hyprm_id = best_hyprm_id for each fold 
@@ -79,7 +80,8 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             for k=1:kfolds
                 search_results{k} = postprocess_search_hyper_params( search_params{k} );
             end
-            criterion_id = find(ismember(model_cfg_params.train_aim, search_results{1}.criteria_names),1);
+            search_criterion = experiment_stage{2};
+            criterion_id = find(ismember(search_criterion, search_results{1}.criteria_names),1);
             for k=1:kfolds
                 % get best hyper param id
                 hp_comb_vector = search_results{k}.best_hyper_params_per_criterion(criterion_id, :);
