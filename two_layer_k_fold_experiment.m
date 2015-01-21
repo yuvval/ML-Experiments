@@ -45,6 +45,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     num_examples = length(labels);
 
     %% Split to K folds
+    rng('default')
     rng(hyper_params_sweep.seed) % make sure to sync the seed before an split
     ofolds = cvpartition(num_examples, 'KFold', kfolds);
 

@@ -67,13 +67,13 @@ function search_hyper_params(search_params)
         parfor k = 1:length(search_results_criteria)
             comb_id = hyper_params_combinations_ids(k);
             ifold = fold_ids(comb_id);
-            train_wrapper(train_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
+            train_wrapper(train_func, fname_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
         end
     else        
         for k = 1:length(search_results_criteria)
             comb_id = hyper_params_combinations_ids(k);
             ifold = fold_ids(comb_id);
-            train_wrapper(train_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
+            train_wrapper(train_func, fname_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
         end
     end
     
@@ -82,9 +82,9 @@ function search_hyper_params(search_params)
 end
 
 
-function [search_results_fnames] = train_wrapper(train_func, hyper_params, cfg_params, examples, labels, training_fold_logical_index, ofold, ifold)
+function [search_results_fnames] = train_wrapper(train_func, fname_func, hyper_params, cfg_params, examples, labels, training_fold_logical_index, ofold, ifold)
 
-[~, results_filename, ~] = init_hyper_params(struct('cfg_params', cfg_params), hyper_params, ofold, ifold);
+results_filename = fname_func(cfg_params, hyper_params, ofold, ifold);
 try
     pause(mod(cputime,1)); % pause for a random time (<1 sec), before accessing the filesystem
     full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
@@ -93,6 +93,8 @@ try
         [search_results_fnames] = ...
             train_func(hyper_params, cfg_params, examples, labels, training_fold_logical_index, ofold, ifold);
         system(['rm ', full_fname_touch]); % removed the touched file
+    else
+        fprintf('skipping because touched: %s\n', results_filename)
     end
     
 catch exception
