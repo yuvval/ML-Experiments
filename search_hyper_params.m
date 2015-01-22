@@ -86,7 +86,7 @@ function [search_results_fnames] = train_wrapper(train_func, fname_func, hyper_p
 
 results_filename = fname_func(cfg_params, hyper_params, ofold, ifold);
 try
-    pause(mod(cputime,1)); % pause for a random time (<1 sec), before accessing the filesystem
+    pause(mod(cputime,2)); % pause for a random time (<2 sec), before accessing the filesystem
     full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
     if ~exist(full_fname_touch, 'file')
         system(['touch ', full_fname_touch]); % removed the touched file
