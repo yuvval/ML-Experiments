@@ -52,18 +52,19 @@ end
     fname_func = search_params.train_results_fname_func;
     ofold = search_params.dataset_fold_id;
     
-    if clean_junk_mutex_files_flag
-        % delete all junk 'touch' file locks if exist
         for comb_id = 1:length(search_results_criteria)
             hyper_params{comb_id} = hyper_param_comb_to_struct(train_params_comb(:, comb_id), hyper_params_sweep);
             ifold = fold_ids(comb_id);
             results_filename = fname_func(cfg_params, hyper_params{comb_id}, ofold, ifold);
-            full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
-            if exist(full_fname_touch, 'file')
-                system(['rm ', full_fname_touch]); % removed the touched file
+            if clean_junk_mutex_files_flag % delete junk 'touch' file locks if exist
+                full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
+                if exist(full_fname_touch, 'file')
+                    system(['rm ', full_fname_touch]); % removed the touched file
+                end
             end
         end
-        return
+    if clean_junk_mutex_files_flag  % delete all junk 'touch' file locks if exist and exit
+        return; %exit
     end
     
     % select hyper params combinations to draw    
