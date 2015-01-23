@@ -2,7 +2,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
 % function results = two_layer_k_fold_experiment(experiment_params, model_cfg_params, experiment_stage)
 % Runs a 2 layer K folds experiment.
 % input params: experiment params, model_configuration params
-%               experiment_stage: either {'search_hyperparams'},
+%               experiment_stage: either {'search_hyperparams'}, {'clean_junk_mutex'}
 %               {'postprocess_search_hp', folds_range},
 %               {'final_experiment', search_criterion_str}
 % returns: results structure with the following fields:
@@ -65,6 +65,12 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     %               experiment_stage: either 'search_hyperparams',
 %               'postprocess_search_hp', 'final_experiment'
     switch experiment_stage{1}
+        case 'clean_junk_mutex'
+            for k=1:kfolds
+                search_hyper_params(search_params{k}, true);
+            end
+            fprintf('cleaned junk mutex files')
+            
         case 'search_hyperparams'
             results.tstart = datestr(now);
             

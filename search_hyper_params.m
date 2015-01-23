@@ -1,4 +1,4 @@
-function search_hyper_params(search_params)
+function search_hyper_params(search_params, clean_junk_mutex_files_flag)
 % function search_hyper_params(search_params)
 % performs a (parfor) grid search on hyper params. use
 % postprocess_search_hyper_params() to retrieve the results. this function
@@ -14,6 +14,11 @@ function search_hyper_params(search_params)
 %     search_params{k}.dataset_fold_id = k; % where folds = cvpartition(num_examples, 'KFold', kfolds);
 %     search_params{k}.kfolds = 5;        
 %     search_params{k}.hyper_params_sweep;        
+
+if nargin<2
+    clean_junk_mutex_files_flag = false;
+end
+
 
 
     %% load the dataset
@@ -47,15 +52,18 @@ function search_hyper_params(search_params)
     fname_func = search_params.train_results_fname_func;
     ofold = search_params.dataset_fold_id;
     
-    % delete all junk 'touch' file locks if exist
-    for comb_id = 1:length(search_results_criteria)
-        hyper_params{comb_id} = hyper_param_comb_to_struct(train_params_comb(:, comb_id), hyper_params_sweep);
-        ifold = fold_ids(comb_id);
-        results_filename = fname_func(cfg_params, hyper_params{comb_id}, ofold, ifold);
-        full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
-        if exist(full_fname_touch, 'file')
-            system(['rm ', full_fname_touch]); % removed the touched file
+    if clean_junk_mutex_files_flag
+        % delete all junk 'touch' file locks if exist
+        for comb_id = 1:length(search_results_criteria)
+            hyper_params{comb_id} = hyper_param_comb_to_struct(train_params_comb(:, comb_id), hyper_params_sweep);
+            ifold = fold_ids(comb_id);
+            results_filename = fname_func(cfg_params, hyper_params{comb_id}, ofold, ifold);
+            full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
+            if exist(full_fname_touch, 'file')
+                system(['rm ', full_fname_touch]); % removed the touched file
+            end
         end
+        return
     end
     
     % select hyper params combinations to draw    
@@ -98,7 +106,10 @@ try
     end
     
 catch exception
-    system(['rm ', full_fname_touch]); % removed the touched file
+    rm_cmd = ['rm ', full_fname_touch];
+    system(rm_cmd); % removed the touched file
+    disp(rm_cmd);
+    
     rethrow(exception)             % Line 5
 end
 end
