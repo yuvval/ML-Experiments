@@ -67,11 +67,26 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     switch experiment_stage{1}
         case 'search_hyperparams'
             results.tstart = datestr(now);
-            for k=1:kfolds
+            
+            % To get better distribute the jobs over CPUs, we 
+            % iterate on K outer folds in random order. always starting 1st fold
+            rng(int32(mod(cputime,1)*100)); % random seed according to current cputime
+            folds_iter = [1, 1+randperm(kfolds-1)];
+            
+            rng(hyper_params_sweep.seed); % syncing seed again
+            
+            % iterate on each outer fold and grid search on it
+            for k=folds_iter
                 fprintf('Search: Outer fold = %d\n', k');
                 search_hyper_params(search_params{k});
             end
             results.tend = datestr(now);
+
+            % postprocess_search_hp
+            for k=1:kfolds
+                search_results{k} = postprocess_search_hyper_params( search_params{k} );
+            end
+            results.search_results = search_results;
         case 'postprocess_search_hp'
             for k=experiment_stage{2}
                 search_results{k} = postprocess_search_hyper_params( search_params{k} );
@@ -94,11 +109,12 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             % iter on each fold, train with best hyper param and prepare results
             parfor k=1:kfolds
                 fprintf('Experiment: Fold = %d\n', k');
-                [results_fnames{k}] = search_params{k}.train_func(best_hyper_params{k}, model_cfg_params, examples, labels, ofolds.training(k), k, nan);
+                [results_fnames{k}, result_criteria{k}] = search_params{k}.train_func(best_hyper_params{k}, model_cfg_params, examples, labels, ofolds.training(k), k, nan);
             end
             
             %% prepare results to return
             results.fnames = results_fnames;
+            results.result_criteria = result_criteria;
             results.search_results = search_results;
             results.best_hyper_params = best_hyper_params;
 
