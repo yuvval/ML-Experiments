@@ -77,7 +77,11 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             % To get better distribute the jobs over CPUs, we 
             % iterate on K outer folds in random order. always starting 1st fold
             rng(int32(mod(cputime,1)*100)); % random seed according to current cputime
-            folds_iter = randperm(kfolds);
+            if length(experiment_stage) == 1
+                folds_iter = randperm(kfolds);
+            else
+                folds_iter = experiment_stage{2}; % iterate on folds (or subset of them) in given order
+            end                
             
             rng(hyper_params_sweep.seed); % syncing seed again
             
