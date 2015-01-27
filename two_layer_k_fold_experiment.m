@@ -93,7 +93,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             results.tend = datestr(now);
 
             % postprocess_search_hp
-            for k=1:kfolds
+            for k=1:folds_iter
                 search_results{k} = postprocess_search_hyper_params( search_params{k} );
             end
             results.search_results = search_results;
