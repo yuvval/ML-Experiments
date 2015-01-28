@@ -81,8 +81,9 @@ for hp_comb_id = 1:size(hyper_params_combs,1)
     hp_comb = hyper_params_combs(hp_comb_id, :);
     foo = @(v)(all(v(1:(end-1)) == hp_comb.'));
     hp_comb_indices = cellfun(foo, train_params_comb_cell);
-    mean_criteria_per_hp(:, hp_comb_id) = nanmean(results_criteria_mat(:,hp_comb_indices).');    
-    std_criteria_per_hp(:, hp_comb_id) = nanstd(results_criteria_mat(:,hp_comb_indices).');    
+    res_crit_hp = results_criteria_mat(:,hp_comb_indices).';
+    mean_criteria_per_hp(:, hp_comb_id) = nanmean(res_crit_hp);    
+    std_criteria_per_hp(:, hp_comb_id) = nanstd(res_crit_hp)./sqrt(sum(~isnan(res_crit_hp)));  % std of mean (s.e.m)  
 end
 
 [~,maximizing_hp_ids] =  max(mean_criteria_per_hp.');
