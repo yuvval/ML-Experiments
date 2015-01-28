@@ -5,6 +5,9 @@ function search_hyper_params(search_params, clean_junk_mutex_files_flag)
 % has mutual exclusion mechnism, so it can be executed concurrently by different machines
 % postprocess_search_hyper_params() can be called before the search execution
 % terminates
+% A NOTE REGARDING SEED: We use the given seed to select the validation
+% subset. However, we change it later in order to choose a random sequence
+% of training. Therefore EACH OF THE training procedures NEEDS TO SET THE SEED BY ITSELF!
 %
 % example for setting search_params struct:
 %     search_params{k}.train_func = @train_func_handle; % syntax is [result_criterion, full_fname_results] = train_func(hyper_param_id, cfg_params, examples, labels, training_fold_logical_index);
@@ -68,7 +71,7 @@ end
     end
     
     % select hyper params combinations to draw    
-    rng(ceil(cputime*100)) % random seed to select hyper params combinations to draw
+    rng(ceil(cputime*100)) % RANDOM seed to select hyper params combinations to draw
     hyper_params_combinations_ids = randperm(length(search_results_criteria));
     % parallel iterate on combination of hyper params and inner folds. 
     isOpen = ~isempty(gcp('nocreate')); % If no pool, use regular for loop
@@ -95,7 +98,7 @@ function [search_results_fnames] = train_wrapper(train_func, fname_func, hyper_p
 
 results_filename = fname_func(cfg_params, hyper_params, ofold, ifold);
 try
-    pause(mod(cputime,2)); % pause for a random time (<2 sec), before accessing the filesystem
+    pause(rand()*30); % pause for a random time, before accessing the filesystem
     full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
     if ~exist(full_fname_touch, 'file')
         system(['touch ', full_fname_touch]); % removed the touched file
