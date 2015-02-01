@@ -86,8 +86,13 @@ for hp_comb_id = 1:size(hyper_params_combs,1)
     std_criteria_per_hp(:, hp_comb_id) = nanstd(res_crit_hp)./sqrt(sum(~isnan(res_crit_hp)));  % std of mean (s.e.m)  
 end
 
-[~,maximizing_hp_ids] =  max(mean_criteria_per_hp.');
-[~, majority_hp_id] = max(hist(maximizing_hp_ids, 1:max(maximizing_hp_ids)));
+if size(mean_criteria_per_hp,2) >1
+    [~,maximizing_hp_ids] =  max(mean_criteria_per_hp.');
+    [~, majority_hp_id] = max(hist(maximizing_hp_ids, 1:max(maximizing_hp_ids)));
+else
+    maximizing_hp_ids = 1;
+    majority_hp_id = 1;
+end
 criteria_names{end+1} = 'majority_vote';
 maximizing_hp_ids(end+1) = majority_hp_id;
 

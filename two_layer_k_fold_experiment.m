@@ -103,14 +103,23 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             end
             results.search_results = search_results;
         case 'final_experiment'
-            for k=1:kfolds
+            if length(experiment_stage)>2
+                search_folds = experiment_stage{3};
+            else
+                search_folds = 1:kfolds;
+            end
+            for k=search_folds
                 search_results{k} = postprocess_search_hyper_params( search_params{k} );
             end
             search_criterion = experiment_stage{2};
             criterion_id = find(ismember(search_criterion, search_results{1}.criteria_names),1);
             for k=1:kfolds
                 % get best hyper param id
-                hp_comb_vector = search_results{k}.best_hyper_params_per_criterion(criterion_id, :);
+                if length(experiment_stage)>2 % get it from a single outer fold (to all other outer folds)
+                    hp_comb_vector = search_results{experiment_stage{3}}.best_hyper_params_per_criterion(criterion_id, :);
+                else
+                    hp_comb_vector = search_results{k}.best_hyper_params_per_criterion(criterion_id, :);
+                end
                 best_hyper_params{k} = hyper_param_comb_to_struct(hp_comb_vector, hyper_params_sweep);
             end
             
@@ -118,6 +127,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             %% final experiment 
             % iter on each fold, train with best hyper param and prepare results
             parfor k=1:kfolds
+               
                 fprintf('Experiment: Fold = %d\n', k');
                 [results_fnames{k}, result_criteria{k}] = search_params{k}.train_func(best_hyper_params{k}, model_cfg_params, examples, labels, ofolds.training(k), k, nan);
             end
