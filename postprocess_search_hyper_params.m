@@ -44,6 +44,7 @@ cnt_valid = 0;
 
 n_criteria = nan; % init
 criteria_names = {}; % init
+results_criteria_mat = [];
 for comb_id = 1:length(valid_search_results)
     % aggregate hyper params
     hyper_params{comb_id} = hyper_param_comb_to_struct(train_params_comb(:, comb_id), hyper_params_sweep);
@@ -73,8 +74,8 @@ end
 %% find mean of search criteria over inner folds of hyper params combinations
 % get all combinations of hyper params (marginalizing inner folds)
 hyper_params_combs = allcomb(hp_fields_ranges{1:end});
-mean_criteria_per_hp = nan(n_criteria, size(hyper_params_combs,2));
-std_criteria_per_hp  = nan(n_criteria, size(hyper_params_combs,2));
+mean_criteria_per_hp = nan(n_criteria, size(hyper_params_combs,1));
+std_criteria_per_hp  = nan(n_criteria, size(hyper_params_combs,1));
 train_params_comb_cell = num2cell(train_params_comb,1); % conver rows to cell array
 
 for hp_comb_id = 1:size(hyper_params_combs,1)

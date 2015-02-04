@@ -126,10 +126,17 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             
             %% final experiment 
             % iter on each fold, train with best hyper param and prepare results
-            parfor k=1:kfolds
-               
+            % parallel iterate on combination of hyper params and inner folds.
+            if length(experiment_stage)>3
+                k = experiment_stage{4};
                 fprintf('Experiment: Fold = %d\n', k');
-                [results_fnames{k}, result_criteria{k}] = search_params{k}.train_func(best_hyper_params{k}, model_cfg_params, examples, labels, ofolds.training(k), k, nan);
+                search_params{k}.train_func(best_hyper_params{k}, model_cfg_params, examples, labels, ofolds.training(k), k, nan);
+                return
+            else
+                parfor k=1:kfolds
+                    fprintf('Experiment: Fold = %d\n', k');
+                    [results_fnames{k}, result_criteria{k}] = search_params{k}.train_func(best_hyper_params{k}, model_cfg_params, examples, labels, ofolds.training(k), k, nan);
+                end
             end
             
             %% prepare results to return
