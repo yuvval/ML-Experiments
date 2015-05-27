@@ -29,7 +29,14 @@ end
     
     % take the subset for this fold
     examples = all_examples(search_params.dataset_fold, :);
-    labels = all_labels(search_params.dataset_fold);
+    if isvector(all_labels)
+        %labels is a vector
+        labels = all_labels(search_params.dataset_fold);
+    else
+        %labels is a matrix of weak similarity supervision
+        labels = all_labels(search_params.dataset_fold, search_params.dataset_fold);
+    end
+
     num_examples = length(labels);
     
     %% Split to K folds (training / validation)
@@ -73,8 +80,12 @@ end
     % select hyper params combinations to draw    
     rng(ceil(cputime*100)) % RANDOM seed to select hyper params combinations to draw
     hyper_params_combinations_ids = randperm(length(search_results_criteria));
-    % parallel iterate on combination of hyper params and inner folds. 
-    isOpen = ~isempty(gcp('nocreate')); % If no pool, use regular for loop
+    % parallel iterate on combination of hyper params and inner folds.
+    if ~isempty(regexp(version('-release'), '2014', 'match')) % command below is supported only for R2014
+      isOpen = ~isempty(gcp('nocreate')); % If no pool, use regular for loop
+    else
+      isOpen = false;
+    end
     if isOpen
         parfor k = 1:length(search_results_criteria)
             comb_id = hyper_params_combinations_ids(k);

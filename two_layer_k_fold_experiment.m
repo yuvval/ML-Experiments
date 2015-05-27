@@ -112,7 +112,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
                 search_results{k} = postprocess_search_hyper_params( search_params{k} );
             end
             search_criterion = experiment_stage{2};
-            criterion_id = find(ismember(search_criterion, search_results{1}.criteria_names),1);
+            criterion_id = find(ismember(search_criterion, search_results{search_folds(1)}.criteria_names),1);
             for k=1:kfolds
                 % get best hyper param id
                 if length(experiment_stage)>2 % get it from a single outer fold (to all other outer folds)
