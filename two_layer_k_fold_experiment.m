@@ -44,10 +44,23 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     [examples, labels, model_cfg_params] = experiment_params.load_data_func(model_cfg_params);
     num_examples = length(labels);
 
-    %% Split to K folds
+    %% Split to K folds    
     rng('default')
     rng(hyper_params_sweep.seed) % make sure to sync the seed before an split
-    ofolds = cvpartition(num_examples, 'KFold', kfolds);
+    
+    % if split was 'manually' set by the load_data_func, then use that
+    % split. Otherwise, generate a random split
+    if iscell(model_cfg_params.split)
+        ofolds = model_cfg_params.split;
+        if kfolds ~= length(ofolds)
+            error('kfolds and given split length should match')
+        end
+    else        
+        ofolds_partition = cvpartition(num_examples, 'KFold', kfolds);
+        for k=1:kfolds
+            ofolds{k} = ofolds_partition.training(k);
+        end
+    end
 
     %% Grid search on hyper params
     [search_params, search_results, results_fnames, best_hyper_params] = deal(cell(kfolds, 1));
@@ -56,7 +69,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
         search_params{k}.train_results_fname_func = experiment_params.train_results_fname_func;        
         search_params{k}.load_data_func = experiment_params.load_data_func;        
         search_params{k}.cfg_params = model_cfg_params;
-        search_params{k}.dataset_fold = ofolds.training(k);
+        search_params{k}.dataset_fold = ofolds{k};
         search_params{k}.dataset_fold_id = k;
         search_params{k}.kfolds = 5;        
         search_params{k}.hyper_params_sweep = hyper_params_sweep;        
@@ -135,7 +148,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             else
                 parfor k=1:kfolds
                     fprintf('Experiment: Fold = %d\n', k');
-                    [results_fnames{k}, result_criteria{k}] = search_params{k}.train_func(best_hyper_params{k}, model_cfg_params, examples, labels, ofolds.training(k), k, nan);
+                    [results_fnames{k}, result_criteria{k}] = search_params{k}.train_func(best_hyper_params{k}, model_cfg_params, examples, labels, ofolds{k}, k, nan);
                 end
             end
             
