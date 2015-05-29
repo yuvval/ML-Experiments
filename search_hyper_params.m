@@ -27,14 +27,17 @@ end
     %% load the dataset
     [all_examples, all_labels, search_params.cfg_params] = search_params.load_data_func(search_params.cfg_params);
     
-    % take the subset for this fold
-    examples = all_examples(search_params.dataset_fold, :);
+    % take the entire subset for this (outer) fold
+    examples = all_examples(search_params.dataset_fold == 1, :);
+    if isfield(search_params.cfg_params, 'new_samples_inds')        
+        search_params.cfg_params.new_samples_inds = search_params.cfg_params.new_samples_inds(search_params.dataset_fold == 1);
+    end
     if isvector(all_labels)
         %labels is a vector
-        labels = all_labels(search_params.dataset_fold);
+        labels = all_labels(search_params.dataset_fold == 1);
     else
         %labels is a matrix of weak similarity supervision
-        labels = all_labels(search_params.dataset_fold, search_params.dataset_fold);
+        labels = all_labels(search_params.dataset_fold == 1, search_params.dataset_fold == 1);
     end
 
     num_examples = length(labels);

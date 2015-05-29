@@ -34,19 +34,19 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     if ~iscell(experiment_stage)
         experiment_stage = {experiment_stage};
     end
-
-    %% saving experiment and model configurations for results struct (for history)
-    results.model_cfg_params = model_cfg_params;
-    results.experiment_params = experiment_params;
     
     
     %% load the dataset
     [examples, labels, model_cfg_params] = experiment_params.load_data_func(model_cfg_params);
     num_examples = length(labels);
 
+    %% saving experiment and model configurations for results struct (for history)
+    results.model_cfg_params = model_cfg_params;
+    results.experiment_params = experiment_params;
+    
     %% Split to K folds    
     rng('default')
-    rng(hyper_params_sweep.seed) % make sure to sync the seed before an split
+    rng(hyper_params_sweep.seed) % make sure to sync the seed before a split
     
     % if split was 'manually' set by the load_data_func, then use that
     % split. Otherwise, generate a random split
@@ -143,7 +143,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             if length(experiment_stage)>3
                 k = experiment_stage{4};
                 fprintf('Experiment: Fold = %d\n', k');
-                search_params{k}.train_func(best_hyper_params{k}, model_cfg_params, examples, labels, ofolds.training(k), k, nan);
+                search_params{k}.train_func(best_hyper_params{k}, model_cfg_params, examples, labels, ofolds{k}, k, nan);
                 return
             else
                 parfor k=1:kfolds
