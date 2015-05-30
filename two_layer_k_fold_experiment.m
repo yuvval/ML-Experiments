@@ -37,8 +37,14 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     
     
     %% load the dataset
-    [examples, labels, model_cfg_params] = experiment_params.load_data_func(model_cfg_params);
-    num_examples = length(labels);
+    if ~strcmp(experiment_stage{1}, 'postprocess_search_hp')
+        [examples, labels, model_cfg_params] = experiment_params.load_data_func(model_cfg_params);
+        num_examples = length(labels);
+    else
+        dont_load_data_flag = 1;
+        [~, ~, model_cfg_params] = experiment_params.load_data_func(model_cfg_params, dont_load_data_flag);
+        num_examples = 666;
+    end
 
     %% saving experiment and model configurations for results struct (for history)
     results.model_cfg_params = model_cfg_params;

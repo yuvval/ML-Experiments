@@ -67,9 +67,9 @@ end
     
         for comb_id = 1:length(search_results_criteria)
             hyper_params{comb_id} = hyper_param_comb_to_struct(train_params_comb(:, comb_id), hyper_params_sweep);
-            ifold = fold_ids(comb_id);
-            results_filename = fname_func(cfg_params, hyper_params{comb_id}, ofold, ifold);
+            ifold = fold_ids(comb_id);            
             if clean_junk_mutex_files_flag % delete junk 'touch' file locks if exist
+                results_filename = fname_func(cfg_params, hyper_params{comb_id}, ofold, ifold);
                 full_fname_touch =  fullfile(cfg_params.path_results_mat , ['touch_', results_filename] );
                 if exist(full_fname_touch, 'file')
                     system(['rm ', full_fname_touch]); % removed the touched file

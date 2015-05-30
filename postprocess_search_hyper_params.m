@@ -45,7 +45,7 @@ cnt_valid = 0;
 n_criteria = nan; % init
 criteria_names = {}; % init
 results_criteria_mat = [];
-for comb_id = 1:length(valid_search_results)
+for comb_id = 1:length(valid_search_results)    
     % aggregate hyper params
     hyper_params{comb_id} = hyper_param_comb_to_struct(train_params_comb(:, comb_id), hyper_params_sweep);
     ifold = fold_ids(comb_id);
