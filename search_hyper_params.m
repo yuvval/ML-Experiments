@@ -96,14 +96,14 @@ if isOpen
     parfor k = 1:length(search_results_criteria)
         comb_id = hyper_params_combinations_ids(k);
         ifold = fold_ids(comb_id);
-        cfg_params.hyper_params_comb = hyper_params{comb_id};
+        
         train_wrapper(train_func, fname_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
     end
 else
     for k = 1:length(search_results_criteria)
         comb_id = hyper_params_combinations_ids(k);
         ifold = fold_ids(comb_id);
-        cfg_params.hyper_params_comb = hyper_params{comb_id};
+        
         train_wrapper(train_func, fname_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
     end
 end
@@ -114,7 +114,7 @@ end
 
 
 function [search_results_fnames] = train_wrapper(train_func, fname_func, hyper_params, cfg_params, examples, labels, training_fold_logical_index, ofold, ifold)
-
+cfg_params.hyper_params_comb = hyper_params; % saving hyper params for later usage (for generating snapshots filenames)
 results_filename = fname_func(cfg_params, hyper_params, ofold, ifold);
 pause(rand()*5); % pause for a random time, before accessing the filesystem
 full_fname_results = fullfile(cfg_params.path_results_mat ,[results_filename '.mat']);
