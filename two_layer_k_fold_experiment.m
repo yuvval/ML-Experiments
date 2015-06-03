@@ -36,6 +36,7 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     end
     
     
+    fprintf('2 layer k fold experiment: before load the dataset, %s\n\n', get_mem_usage());
     %% load the dataset
     if ~strcmp(experiment_stage{1}, 'postprocess_search_hp')
         [examples, labels, model_cfg_params] = experiment_params.load_data_func(model_cfg_params);
@@ -43,8 +44,9 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
     else
         dont_load_data_flag = 1;
         [~, ~, model_cfg_params] = experiment_params.load_data_func(model_cfg_params, dont_load_data_flag);
-        num_examples = 666;
+        num_examples = 666; % dummy value
     end
+    fprintf('2 layer k fold experiment: after load the dataset, %s\n\n', get_mem_usage());
 
     %% saving experiment and model configurations for results struct (for history)
     results.model_cfg_params = model_cfg_params;
@@ -91,6 +93,9 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             fprintf('cleaned junk mutex files')
             
         case 'search_hyperparams'
+            clear examples % free up some memory
+            clear labels % free up some memory
+            
             results.tstart = datestr(now);
             
             % To get better distribute the jobs over CPUs, we 

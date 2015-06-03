@@ -8,6 +8,7 @@ function [ processed_search_results ] = postprocess_search_hyper_params( search_
 % processed_search_results.results = results;
 % processed_search_results.mean_criteria_per_hp = mean_criteria_per_hp;
 % processed_search_results.std_criteria_per_hp = std_criteria_per_hp;
+% processed_search_results.n_loaded_results_per_hp
 % processed_search_results.hyper_params_combs = hyper_params_combs;
 % processed_search_results.best_hyper_params_per_criterion = best_hyper_params_per_criterion;
 % processed_search_results.criteria_names = criteria_names;
@@ -76,6 +77,7 @@ end
 hyper_params_combs = allcomb(hp_fields_ranges{1:end});
 mean_criteria_per_hp = nan(n_criteria, size(hyper_params_combs,1));
 std_criteria_per_hp  = nan(n_criteria, size(hyper_params_combs,1));
+n_loaded_results_per_hp = zeros(1, size(hyper_params_combs,1));
 train_params_comb_cell = num2cell(train_params_comb,1); % conver rows to cell array
 
 for hp_comb_id = 1:size(hyper_params_combs,1)
@@ -85,6 +87,7 @@ for hp_comb_id = 1:size(hyper_params_combs,1)
     res_crit_hp = results_criteria_mat(:,hp_comb_indices).';
     mean_criteria_per_hp(:, hp_comb_id) = nanmean(res_crit_hp);    
     std_criteria_per_hp(:, hp_comb_id) = nanstd(res_crit_hp)./sqrt(sum(~isnan(res_crit_hp)));  % std of mean (s.e.m)  
+    n_loaded_results_per_hp(hp_comb_id) = sum(~isnan(res_crit_hp(:,1)));
 end
 
 if size(mean_criteria_per_hp,2) >1
@@ -107,6 +110,7 @@ processed_search_results.results_criteria_mat = results_criteria_mat;
 processed_search_results.results = results;
 processed_search_results.mean_criteria_per_hp = mean_criteria_per_hp;
 processed_search_results.std_criteria_per_hp = std_criteria_per_hp;
+processed_search_results.n_loaded_results_per_hp = n_loaded_results_per_hp;
 processed_search_results.hyper_params_combs = hyper_params_combs;
 processed_search_results.best_hyper_params_per_criterion = best_hyper_params_per_criterion;
 processed_search_results.criteria_names = criteria_names;
