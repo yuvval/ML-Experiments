@@ -69,8 +69,7 @@ fname_func = search_params.train_results_fname_func;
 ofold = search_params.dataset_fold_id;
 
 for comb_id = 1:length(search_results_criteria)
-    hyper_params{comb_id} = hyper_param_comb_to_struct(train_params_comb(:, comb_id), hyper_params_sweep);
-    cfg_params.hyper_params_comb = hyper_params{comb_id};
+    hyper_params{comb_id} = hyper_param_comb_to_struct(train_params_comb(:, comb_id), hyper_params_sweep);    
     ifold = fold_ids(comb_id);
     if clean_junk_mutex_files_flag % delete junk 'touch' file locks if exist
         results_filename = fname_func(cfg_params, hyper_params{comb_id}, ofold, ifold);
@@ -97,12 +96,14 @@ if isOpen
     parfor k = 1:length(search_results_criteria)
         comb_id = hyper_params_combinations_ids(k);
         ifold = fold_ids(comb_id);
+        cfg_params.hyper_params_comb = hyper_params{comb_id};
         train_wrapper(train_func, fname_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
     end
 else
     for k = 1:length(search_results_criteria)
         comb_id = hyper_params_combinations_ids(k);
         ifold = fold_ids(comb_id);
+        cfg_params.hyper_params_comb = hyper_params{comb_id};
         train_wrapper(train_func, fname_func, hyper_params{comb_id}, cfg_params, examples, labels, ifolds.training(ifold), ofold, ifold);
     end
 end
