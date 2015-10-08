@@ -170,7 +170,15 @@ function results = two_layer_k_fold_experiment(experiment_params, model_cfg_para
             results.best_hyper_params = best_hyper_params;
 
             %% save results to a .mat file before returning
-            results_fname = fullfile(experiment_params.path_results_mat, experiment_params.experiment_results_ref_fname);
+            % generate filename
+            
+            hp_fields = experiment_params.params_to_include_in_results_fname;
+            for i = 1:numel(hp_fields)
+                params_to_include_in_fname.(hp_fields{i}) = best_hyper_params{1}.(hp_fields{i});
+            end
+            
+            params_str = buildStringFromStruct(params_to_include_in_fname, '_');
+            results_fname = fullfile(experiment_params.path_results_mat, [experiment_params.experiment_results_ref_fname '__' params_str] );
             save(results_fname, 'results')
             fprintf('Saved experiment results on:\n %s\n', results_fname);
             

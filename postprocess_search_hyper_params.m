@@ -46,6 +46,7 @@ cnt_valid = 0;
 n_criteria = nan; % init
 criteria_names = {}; % init
 results_criteria_mat = [];
+results_criteria_mat_trn = [];
 for comb_id = 1:length(valid_search_results)    
     % aggregate hyper params
     hyper_params{comb_id} = hyper_param_comb_to_struct(train_params_comb(:, comb_id), hyper_params_sweep);
@@ -61,12 +62,18 @@ for comb_id = 1:length(valid_search_results)
         if cnt_valid == 1 %% init results_criteria_mat matrix
             n_criteria = numel(struct2cell(results{comb_id}.result_criteria));
             criteria_names = fieldnames(results{comb_id}.result_criteria);
-            results_criteria_mat = nan(n_criteria, size(train_params_comb,2));
+            [results_criteria_mat, results_criteria_mat_trn] = deal(nan(n_criteria, size(train_params_comb,2)));            
         end
         % aggregate possible search criteria results to a matrix, each column is a different comb
         results_criteria_mat(:, comb_id) = struct2array(results{comb_id}.result_criteria).';
+        if isfield(results{comb_id}, 'trn_set_prec_allk')
+            if length(results{comb_id}.trn_set_prec_allk) >0
+                results_criteria_mat_trn(:, comb_id) = [results{comb_id}.trn_set_prec_allk([1;5;10]);results{comb_id}.trn_set_mean_avg_prec;results{comb_id}.trn_set_AUC]; ;
+            end
+        end
     catch % if load is failed, mark this iteration as non valid and fill results with defaults        
         results_criteria_mat(:, comb_id) = nan;
+        results_criteria_mat_trn(:, comb_id) = nan;
         valid_search_results(comb_id) = 0;
         results{comb_id} = [];
     end
@@ -76,8 +83,12 @@ end
 % get all combinations of hyper params (marginalizing inner folds)
 hyper_params_combs = allcomb(hp_fields_ranges{1:end});
 mean_criteria_per_hp = nan(n_criteria, size(hyper_params_combs,1));
+mean_criteria_per_hp_trn = nan(n_criteria, size(hyper_params_combs,1));
 std_criteria_per_hp  = nan(n_criteria, size(hyper_params_combs,1));
+std_criteria_per_hp_trn  = nan(n_criteria, size(hyper_params_combs,1));
 n_loaded_results_per_hp = zeros(1, size(hyper_params_combs,1));
+train_params_comb(isnan(train_params_comb)) = 0;% a hack to support values of NAN
+hyper_params_combs(isnan(hyper_params_combs)) = 0; % a hack to support values of NAN
 train_params_comb_cell = num2cell(train_params_comb,1); % conver rows to cell array
 
 for hp_comb_id = 1:size(hyper_params_combs,1)
@@ -85,8 +96,12 @@ for hp_comb_id = 1:size(hyper_params_combs,1)
     foo = @(v)(all(v(1:(end-1)) == hp_comb.'));
     hp_comb_indices = cellfun(foo, train_params_comb_cell);
     res_crit_hp = results_criteria_mat(:,hp_comb_indices).';
+    res_crit_hp_trn = results_criteria_mat_trn(:,hp_comb_indices).';
+   
     mean_criteria_per_hp(:, hp_comb_id) = nanmean(res_crit_hp);    
+    mean_criteria_per_hp_trn(:, hp_comb_id) = nanmean(res_crit_hp_trn);    
     std_criteria_per_hp(:, hp_comb_id) = nanstd(res_crit_hp)./sqrt(sum(~isnan(res_crit_hp)));  % std of mean (s.e.m)  
+    std_criteria_per_hp_trn(:, hp_comb_id) = nanstd(res_crit_hp_trn)./sqrt(sum(~isnan(res_crit_hp_trn)));  % std of mean (s.e.m)  
     n_loaded_results_per_hp(hp_comb_id) = sum(~isnan(res_crit_hp(:,1)));
 end
 
@@ -109,6 +124,8 @@ processed_search_results.results_criteria_mat = results_criteria_mat; % postproc
 processed_search_results.results_criteria_mat = results_criteria_mat;
 processed_search_results.results = results;
 processed_search_results.mean_criteria_per_hp = mean_criteria_per_hp;
+processed_search_results.mean_criteria_per_hp_trn = mean_criteria_per_hp_trn;
+processed_search_results.std_criteria_per_hp_trn = std_criteria_per_hp_trn;
 processed_search_results.std_criteria_per_hp = std_criteria_per_hp;
 processed_search_results.n_loaded_results_per_hp = n_loaded_results_per_hp;
 processed_search_results.hyper_params_combs = hyper_params_combs;
